@@ -55,5 +55,3 @@ resource "google_compute_instance" "vm_lab_dev_01" {
     }
   }
 }
-
-
