@@ -40,18 +40,46 @@ resource "google_compute_instance" "vm_lab_dev_01" {
   name         = "cl-vm-lab-dev-uc1a-01"
   machine_type = "e2-micro"
   zone         = "us-central1-a"
-
   boot_disk {
     initialize_params {
       image = "debian-cloud/debian-12"
       size  = 10
     }
   }
-
   network_interface {
-    subnetwork = google_compute_subnetwork.subnet_uc1a.id
-
-    access_config {
-    }
+    subnetwork = google_compute_subnetwork.subnet_uc1a.id     
+         access_config {
   }
+  }
+
+  
+tags=["allow-ssh"]
+}
+
+# 5. Regla de firewall para permitir trafico SSH a una VM
+resource "google_compute_firewall" "allow_ssh" {
+  name         = "allow-ssh"
+  network      = google_compute_network.vpc_network.id
+  source_ranges = ["0.0.0.0/0"]
+  priority     = 1000 
+  direction    = "INGRESS"
+  allow {
+    protocol = "tcp"
+    ports    = ["22"]
+  }
+  target_tags = ["allow-ssh"]
+}
+
+# 6. Regla de firewall para permitir trafico HTTPS a una VM desde internet
+resource "google_compute_firewall" "allow_http" {
+  name         = "allow-http"
+  network      = google_compute_network.vpc_network.id
+  source_ranges = ["0.0.0.0/0"]
+  priority     = 1000 
+  direction    = "INGRESS"
+  allow {
+    protocol = "tcp"
+    ports    = ["80"]
+  }
+  target_tags = ["allow-ssh"]
 }
