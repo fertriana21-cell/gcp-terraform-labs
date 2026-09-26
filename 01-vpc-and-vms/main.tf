@@ -61,7 +61,29 @@ resource "google_compute_firewall" "allow_ssh" {
   name         = "allow-ssh"
   network      = google_compute_network.vpc_network.id
   source_ranges = ["0.0.0.0/0"]
+  source_ranges = ["35.235.240.0/20"] # Permite túneles SSH de Identity-Aware Proxy (IAP)
   priority     = 1000 
+
+# 7. Cloud Router (Requerido para el funcionamiento de Cloud NAT)
+resource "google_compute_router" "router" {
+  name    = "cl-router-lab-dev-01"
+  region  = "us-central1"
+  network = google_compute_network.vpc_network.id
+}
+
+# 8. Puerta de enlace Cloud NAT
+resource "google_compute_router_nat" "nat" {
+  name                               = "cl-nat-lab-dev-01"
+  router                             = google_compute_router.router.name
+  region                             = "us-central1"
+  nat_ip_allocate_option             = "AUTO_ONLY"
+  source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
+
+  log_config {
+    enable = true
+    filter = "ERRORS_ONLY"
+  }
+}
   direction    = "INGRESS"
   allow {
     protocol = "tcp"
