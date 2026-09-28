@@ -118,3 +118,43 @@ terraform apply -auto-approve
 
 ## 📜 Certification Alignment
 Designed as part of hands-on preparation for the **Google Cloud Professional Cloud Network Engineer** certification, demonstrating real-world IaC implementation of VPCs, MIGs, Health Checking, Load Balancing, and Edge Security.
+
+```mermaid
+graph TD
+    Client([Cliente / Internet]) -->|HTTP :80| IP[IP Estática Anycast<br/>alb-global-static-ip]
+    IP --> FWD[Global Forwarding Rule<br/>alb-http-forwarding-rule]
+    FWD --> PROXY[Target HTTP Proxy<br/>alb-target-http-proxy]
+    PROXY --> URLMAP[URL Map<br/>alb-url-map]
+    
+    subgraph Security[Seguridad Perimetral]
+        CA[Cloud Armor Policy<br/>cl-cloud-armor-basico]
+    end
+    
+    URLMAP --> BACKEND[Backend Service<br/>alb-backend-service]
+    CA -.->|Aplica a| BACKEND
+
+    subgraph VPC [VPC: cl-vpc-lab-dev-01]
+        subgraph ProxySubnet [Proxy-Only Subnet: 10.129.0.0/23]
+            ENVOY[Envoy Proxies]
+        end
+
+        subgraph SubnetA [Subred us-central1-a: 10.0.1.0/24]
+            VM_A[VM Instance<br/>web-srv-a]
+        end
+
+        subgraph SubnetB [Subred us-central1-b: 10.0.2.0/24]
+            VM_B[VM Instance<br/>web-srv-b]
+        end
+    end
+
+    BACKEND --> ENVOY
+    ENVOY -->|Ingreso HTTP| VM_A
+    ENVOY -->|Ingreso HTTP| VM_B
+
+    subgraph MIG [Regional MIG Multizona: web-mig-multizone]
+        VM_A
+        VM_B
+        HC[Health Check / Autohealing]
+        AUTOSCALE[Autoscaler 1-2 VMs]
+    end
+```
