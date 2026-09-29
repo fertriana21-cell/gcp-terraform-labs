@@ -4,6 +4,60 @@ Este laboratorio demuestra la interconexión de dos Redes de VPC distintas dentr
 
 A diferencia de despliegues automatizados con IaC, esta arquitectura se configuró manualmente desde la **Consola de GCP** con el objetivo de validar patrones de diseño de red, profundizar en el diagnóstico de sesiones BGP en tiempo real y demostrar fluidez en la administración visual de la infraestructura.
 
+flowchart LR
+    %% Estilos de Nodos y Subgrafos
+    classDef vpcProd fill:#e8f0fe,stroke:#1a73e8,stroke-width:2px,color:#174ea6;
+    classDef vpcOnPrem fill:#fce8e6,stroke:#ea4335,stroke-width:2px,color:#a50e0e;
+    classDef router fill:#feefc3,stroke:#fbbc04,stroke-width:2px,color:#b06000;
+    classDef vm fill:#e6f4ea,stroke:#34a853,stroke-width:2px,color:#137333;
+    classDef gateway fill:#f1f3f4,stroke:#5f6368,stroke-width:2px,color:#202124;
+
+    %% VPC GCP PRODUCCION
+    subgraph VPC1 ["VPC: vpc-gcp-production"]
+        direction TB
+        
+        subgraph REGION1 ["us-central1 (Iowa)"]
+            VM1["VM: vm-gcp-us-central1-01<br/>IP: 10.1.10.2"]:::vm
+            CR1["Cloud Router: cr-gcp-us-central1<br/>ASN: 65001"]:::router
+        end
+
+        subgraph GW1 ["HA VPN Gateway: vpngw-gcp-us-central1"]
+            GW1_IF0["Interfaz 0<br/>35.242.112.249"]:::gateway
+            GW1_IF1["Interfaz 1<br/>34.157.235.253"]:::gateway
+        end
+
+        VM1 --- CR1
+        CR1 --- GW1_IF0
+        CR1 --- GW1_IF1
+    end
+
+    %% VPC ON-PREM SIMULADA
+    subgraph VPC2 ["VPC: vpc-onprem-simulated"]
+        direction TB
+
+        subgraph GW2 ["HA VPN Gateway: vpngw-on-prem-us-central1"]
+            GW2_IF0["Interfaz 0<br/>34.128.33.228"]:::gateway
+            GW2_IF1["Interfaz 1<br/>34.184.42.180"]:::gateway
+        end
+
+        subgraph REGION2 ["us-central1 (Iowa)"]
+            CR2["Cloud Router: cr-onprem-us-central1<br/>ASN: 65002"]:::router
+            VM2["VM: vm-onprem-us-central1-01<br/>IP: 10.2.10.2"]:::vm
+        end
+
+        GW2_IF0 --- CR2
+        GW2_IF1 --- CR2
+        CR2 --- VM2
+    end
+
+    %% TUNELES IPSEC Y BGP
+    GW1_IF0 <== "<b>Tunnel 0 (if0)</b><br/>BGP: 169.254.116.77/30 <--> .78<br/>MED: 100" ==> GW2_IF0
+    GW1_IF1 <== "<b>Tunnel 1 (if1)</b><br/>BGP: 169.254.139.10/30 <--> .9<br/>MED: 100" ==> GW2_IF1
+
+    %% Aplicar clases
+    class VPC1 vpcProd;
+    class VPC2 vpcOnPrem;
+
 ---
 
 ## 📐 Arquitectura del Sistema
