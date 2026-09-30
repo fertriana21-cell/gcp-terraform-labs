@@ -1,0 +1,20 @@
+# GCP Migration & Governance: Lecciones aprendidas al migrar de una cuenta personal a una GCP Organization
+
+## 🎯 El Escenario
+Intento de migración de laboratorios existentes (Terraform / Shared VPC) desde un entorno personal (`@gmail.com`) hacia una Organización recién aprovisionada en Google Cloud (`mcloudsec.com`).
+
+## 🛑 El Desafío (Los Bloqueos)
+1. **Restricción de Jerarquía**: `gcloud beta projects move` fallando por falta de permisos cruzados entre la cuenta origen y la organización destino.
+2. **Políticas de Organización (`iam.allowedPolicyMemberDomains`)**: Bloqueo automático de GCP para agregar miembros de dominios externos no confiados a la organización.
+3. **Propagación y Propiedad**: Tiempos de propagación en la edición de Org Policies y conflictos de permisos al intentar forzar el movimiento.
+
+## 💡 La Solución (Pivote de Estrategia)
+En lugar de forzar la migración del recurso proyecto GCP (que conlleva fricción de IAM y políticas rígidas):
+- **Extracción de IaC**: Empaquetado y exportación de la estructura de código Terraform desde el Cloud Shell personal.
+- **Entorno NATIVO**: Creación de los proyectos desde cero dentro de la Organización `mcloudsec.com`.
+- **Importación limpia**: Carga del repositorio en el Cloud Shell de la organización para ejecución inmediata.
+
+## 🛠️ Aprendizajes Clave
+- Manejo de restricciones en Org Policies (`iam.allowedPolicyMemberDomains`).
+- Diferencia entre mover recursos de infraestructura vs. migrar código de infraestructura (IaC).
+- Buenas prácticas de aislamiento de identidades en entornos multicloud / multidominio.
